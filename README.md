@@ -1,7 +1,11 @@
 # Poker Bot — Aide à la décision Texas Hold'em
 
 Application web : back-end Flask (API REST) + front-end séparé.
-MVP : Texas Hold'em No-Limit, heads-up.
+Deux modes au lancement :
+- **TRICHE** : on entre sa main (et le board), l'appli calcule l'équité et recommande fold / call / raise
+  (cotes implicites, multiway, fold equity par adversaire).
+- **JEU** : vraie partie de No-Limit Hold'em (2 à 10 joueurs), en solo contre des bots qui décident avec
+  notre moteur (Monte Carlo + module décision), ou en multijoueur local sur le même ordinateur.
 
 ## Lancer le projet
 

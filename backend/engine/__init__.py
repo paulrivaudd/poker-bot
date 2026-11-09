@@ -1,4 +1,4 @@
 from engine.evaluator import evaluate, hand_name
-from engine.montecarlo import equity
+from engine.montecarlo import equity, equity_curve
 
-__all__ = ["evaluate", "hand_name", "equity"]
+__all__ = ["evaluate", "hand_name", "equity", "equity_curve"]

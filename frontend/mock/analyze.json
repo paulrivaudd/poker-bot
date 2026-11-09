@@ -1,12 +1,21 @@
 {
   "equity": 0.62,
   "equity_ci": 0.009,
-  "win": 0.60,
+  "win": 0.6,
   "tie": 0.04,
   "lose": 0.36,
   "hand_name": "Carte haute",
   "pot_odds": 0.167,
-  "ev": {"fold": 0, "call": 54.4, "raise": 61.2},
+  "ev": {
+    "fold": 0,
+    "call": 54.4,
+    "raise": 61.2
+  },
   "raise_size": 140,
-  "recommendation": "raise"
+  "recommendation": "raise",
+  "expected_pot": 120,
+  "ev_call_direct": 54.4,
+  "ev_call_implied": null,
+  "p_set": null,
+  "p_all_fold": 0.3
 }

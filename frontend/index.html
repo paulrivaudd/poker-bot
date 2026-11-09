@@ -6,11 +6,11 @@
   <title>Poker Bot</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-mode="cheat">
   <main>
     <header>
       <h1>♠ Poker Bot</h1>
-      <p class="sub">Texas Hold'em No-Limit — aide à la décision</p>
+      <p class="sub" id="subtitle">Texas Hold'em No-Limit — aide à la décision</p>
     </header>
 
     <section class="scene" id="scene">
@@ -55,6 +55,8 @@
 
       <div class="felt">
         <div id="seats"></div>
+        <div class="pot-display game-only" id="pot-display"></div>
+        <div class="banner game-only" id="banner" hidden></div>
         <div class="deck" id="deck"><div class="card-back"></div><div class="card-back"></div><div class="card-back"></div></div>
         <div class="zone board-zone">
           <h2>Board</h2>
@@ -62,23 +64,24 @@
         </div>
         <div class="zone hand-zone">
           <div class="slots" id="hand-slots"></div>
-          <h2>Ma main</h2>
+          <h2 id="hand-label">Ma main</h2>
+          <div class="me-info game-only" id="me-info"></div>
         </div>
       </div>
     </section>
-    <p class="hint">Clique sur une case puis sur une carte. Clic sur une carte posée pour la retirer.</p>
+    <p class="hint cheat-only">Clique sur une case puis sur une carte. Clic sur une carte posée pour la retirer.</p>
 
-    <div class="deal">
+    <div class="deal cheat-only">
       <button id="deal-new">🎲 Nouvelle donne</button>
       <button id="deal-hand">🎲 Main</button>
       <button id="deal-next">Flop →</button>
-      <button id="open-setup">👥 Joueurs</button>
+      <button id="open-setup">☰ Menu</button>
       <label class="check"><input type="checkbox" id="auto" checked> Analyse auto</label>
     </div>
 
-    <section id="picker"></section>
+    <section id="picker" class="cheat-only"></section>
 
-    <section class="params">
+    <section class="params cheat-only">
       <label>Adversaires
         <input id="n_opponents" type="number" min="1" max="9" value="1">
       </label>
@@ -91,7 +94,16 @@
       <label>Relance (montant ajouté)
         <input id="raise_size" type="number" min="0" step="any" placeholder="auto : taille du pot">
       </label>
-      <label>Fold equity adverse : <b id="fe-val">30 %</b>
+      <label>Joueurs qui parlent après moi
+        <input id="players_behind" type="number" min="0" max="9" value="0">
+      </label>
+      <label><span>Tapis effectif <small>(vide = ignoré)</small></span>
+        <input id="effective_stack" type="number" min="0" step="any" placeholder="ex. 1000">
+      </label>
+      <label><span>Part du tapis si brelan : <b id="if-val">50 %</b></span>
+        <input id="implied_fraction" type="range" min="0" max="100" value="50">
+      </label>
+      <label><span>Fold equity par adversaire : <b id="fe-val">30 %</b></span>
         <input id="fold_equity" type="range" min="0" max="100" value="30">
       </label>
       <label>Simulations
@@ -103,14 +115,42 @@
       </label>
     </section>
 
-    <div class="actions">
+    <div class="actions cheat-only">
       <button id="analyze" class="primary">Analyser</button>
       <button id="reset">Réinitialiser</button>
     </div>
 
-    <p id="status"></p>
+    <p id="status" class="cheat-only"></p>
 
-    <section id="result" hidden>
+    <!-- ===== Mode JEU ===== -->
+    <section id="game-ui" class="game-only">
+      <div class="g-actions" id="g-actions">
+        <button id="g-fold" class="g-btn fold">Se coucher</button>
+        <button id="g-call" class="g-btn call">Suivre</button>
+        <div class="g-raise" id="g-raise">
+          <div class="g-quick">
+            <button data-frac="0.5">½ pot</button>
+            <button data-frac="1">Pot</button>
+            <button data-frac="all">Tapis</button>
+          </div>
+          <input type="range" id="g-raise-range">
+          <div class="g-raise-row">
+            <input type="number" id="g-raise-amount">
+            <button id="g-raise-btn" class="g-btn raise">Relancer</button>
+          </div>
+        </div>
+      </div>
+      <div class="g-bar">
+        <button id="g-advice-btn">💡 Conseil du bot</button>
+        <span id="g-advice"></span>
+        <button id="g-next" class="primary" hidden>Main suivante →</button>
+        <button id="g-menu">☰ Menu</button>
+      </div>
+      <p id="g-status"></p>
+      <ol class="g-log" id="g-log"></ol>
+    </section>
+
+    <section id="result" class="cheat-only" hidden>
       <div class="reco" id="r-reco"></div>
       <p class="hand-name" id="r-hand-name"></p>
 
@@ -130,17 +170,22 @@
         <div><span>Cote du pot</span><b id="r-pot-odds"></b></div>
         <div><span>EV fold</span><b id="r-ev-fold"></b></div>
         <div><span id="r-ev-passive-label">EV call</span><b id="r-ev-passive"></b></div>
-        <div><span id="r-ev-raise-label">EV raise</span><b id="r-ev-raise"></b></div>
+        <div><span id="r-ev-raise-label">EV raise</span><b id="r-ev-raise"></b><small id="r-allfold"></small></div>
       </div>
+      <p class="extra" id="r-extra"></p>
     </section>
   </main>
   <div class="overlay" id="setup">
+    <div class="setup-box" id="setup-box"></div>
+  </div>
+  <div class="overlay" id="handoff" hidden>
     <div class="setup-box">
-      <h2>Nouvelle table</h2>
-      <p>Combien d'adversaires autour de toi ?</p>
-      <div class="setup-grid" id="setup-grid"></div>
+      <h2 id="handoff-title">Au tour de …</h2>
+      <p>Passe l'ordinateur à ce joueur. Les autres ne regardent pas !</p>
+      <button class="primary" id="handoff-btn">Voir mes cartes</button>
     </div>
   </div>
   <script src="app.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>

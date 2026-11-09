@@ -31,6 +31,10 @@ def parse_analyze_request(data) -> dict:
         fold_equity = float(data.get("fold_equity", 0.3))
         raise_size = data.get("raise_size")
         raise_size = None if raise_size in (None, "") else float(raise_size)
+        players_behind = int(data.get("players_behind", 0))
+        effective_stack = data.get("effective_stack")
+        effective_stack = None if effective_stack in (None, "") else float(effective_stack)
+        implied_fraction = float(data.get("implied_fraction", 0.5))
     except (TypeError, ValueError):
         raise ValidationError("Paramètres numériques invalides")
 
@@ -45,7 +49,15 @@ def parse_analyze_request(data) -> dict:
         raise ValidationError("fold_equity doit être entre 0 et 1")
     if raise_size is not None and raise_size <= to_call:
         raise ValidationError("raise_size doit être supérieur à to_call")
+    if not 0 <= players_behind <= n_opponents:
+        raise ValidationError("players_behind doit être entre 0 et n_opponents")
+    if effective_stack is not None and effective_stack < 0:
+        raise ValidationError("effective_stack doit être positif")
+    if not 0 <= implied_fraction <= 1:
+        raise ValidationError("implied_fraction doit être entre 0 et 1")
 
     return {"hand": hand, "board": board, "n_opponents": n_opponents,
             "pot": pot, "to_call": to_call, "n_sims": n_sims,
-            "raise_size": raise_size, "fold_equity": fold_equity}
+            "raise_size": raise_size, "fold_equity": fold_equity,
+            "players_behind": players_behind, "effective_stack": effective_stack,
+            "implied_fraction": implied_fraction}

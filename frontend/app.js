@@ -36,6 +36,7 @@ function renderSlots() {
       if (c) { d.classList.add("filled", colorClass(c)); d.innerHTML = faceHTML(c); }
       if (state.active && state.active.zone === zone && state.active.i === i) d.classList.add("active");
       d.onclick = () => {
+        if (document.body.dataset.mode === "game") return;
         if (c) state[zone][i] = null;
         state.active = { zone, i };
         render();
@@ -317,6 +318,17 @@ function renderResult(d) {
   $("r-ev-passive").textContent = fmt(d.ev[passive]);
   $("r-ev-raise-label").textContent = "EV raise " + d.raise_size.toFixed(0);
   $("r-ev-raise").textContent = fmt(d.ev.raise);
+  $("r-allfold").textContent = "tous couchés : " + pct(d.p_all_fold);
+  const implied = d.ev_call_implied != null && d.ev_call_implied > d.ev_call_direct;
+  $("r-ev-passive").parentElement.querySelector("small")?.remove();
+  if (d.ev_call_implied != null) {
+    const sm = document.createElement("small");
+    sm.textContent = implied ? `implicite (direct ${fmt(d.ev_call_direct)})` : `implicite ${fmt(d.ev_call_implied)}`;
+    $("r-ev-passive").after(sm);
+  }
+  const extra = [`Pot attendu si je suis : ${d.expected_pot.toFixed(0)}`];
+  if (d.p_set != null) extra.push(`P(brelan à la prochaine rue) : ${pct(d.p_set)}`);
+  $("r-extra").textContent = extra.join(" · ");
 
   const cells = { fold: "r-ev-fold", call: "r-ev-passive", check: "r-ev-passive", raise: "r-ev-raise" };
   for (const id of ["r-ev-fold", "r-ev-passive", "r-ev-raise"]) $(id).parentElement.classList.remove("best");
@@ -346,6 +358,9 @@ async function runAnalysis() {
       n_sims: Number($("n_sims").value),
       raise_size: $("raise_size").value === "" ? null : Number($("raise_size").value),
       fold_equity: Number($("fold_equity").value) / 100,
+      players_behind: Math.min(Number($("players_behind").value) || 0, Number($("n_opponents").value)),
+      effective_stack: $("effective_stack").value === "" ? null : Number($("effective_stack").value),
+      implied_fraction: Number($("implied_fraction").value) / 100,
     });
     status.textContent = "";
     renderResult(d);
@@ -361,6 +376,7 @@ async function runAnalysis() {
 
 $("analyze").onclick = runAnalysis;
 $("fold_equity").oninput = () => { $("fe-val").textContent = $("fold_equity").value + " %"; };
+$("implied_fraction").oninput = () => { $("if-val").textContent = $("implied_fraction").value + " %"; };
 $("deal-new").onclick = newDeal;
 $("deal-hand").onclick = dealHand;
 $("deal-next").onclick = dealNext;
@@ -376,27 +392,131 @@ $("reset").onclick = () => {
   render();
 };
 
-// ---------- Écran de départ ----------
-function openSetup() {
-  const grid = $("setup-grid");
-  grid.innerHTML = "";
-  for (let n = 1; n <= 9; n++) {
-    const b = document.createElement("button");
-    b.innerHTML = `${n}<small>${n === 1 ? "heads-up" : n + 1 + " joueurs"}</small>`;
-    b.onclick = () => {
-      $("n_opponents").value = n;
-      $("setup").hidden = true;
-      oppCards = [];
-      renderSeats(true);
-      setTimeout(newDeal, REDUCED ? 0 : 450);
-    };
-    grid.appendChild(b);
-  }
+// ---------- Écran de départ (choix du mode) ----------
+const SETUP_DEFAULTS = { stack: 1000, sb: 5, bb: 10 };
+
+function setupScreen(html, back) {
+  const box = $("setup-box");
+  box.innerHTML = (back ? '<button class="back" id="setup-back">← Retour</button>' : "") + html;
+  if (back) $("setup-back").onclick = back;
   $("setup").hidden = false;
 }
 
+function openSetup() {
+  setupScreen(`
+    <h2>♠ Poker Bot</h2>
+    <p>Choisis un mode</p>
+    <div class="modes">
+      <button class="mode-card" id="m-cheat"><span>🕵️</span><b>TRICHE</b>
+        <small>Entre tes cartes (et le board) : le bot te dit quoi faire.</small></button>
+      <button class="mode-card" id="m-game"><span>🃏</span><b>JEU</b>
+        <small>Une vraie partie : contre l'ordinateur ou entre amis.</small></button>
+    </div>`);
+  $("m-cheat").onclick = setupCheat;
+  $("m-game").onclick = setupGameKind;
+}
+
+function setupCheat() {
+  setupScreen(`<h2>Mode TRICHE</h2><p>Combien d'adversaires autour de toi ?</p><div class="setup-grid" id="setup-grid"></div>`, openSetup);
+  const grid = $("setup-grid");
+  for (let n = 1; n <= 9; n++) {
+    const b = document.createElement("button");
+    b.innerHTML = `${n}<small>${n === 1 ? "heads-up" : n + 1 + " joueurs"}</small>`;
+    b.onclick = () => enterCheat(n);
+    grid.appendChild(b);
+  }
+}
+
+function enterCheat(n) {
+  document.body.dataset.mode = "cheat";
+  $("subtitle").textContent = "Mode TRICHE — entre ta main, le bot te dit quoi faire";
+  $("hand-label").textContent = "Ma main";
+  $("banner").hidden = true;
+  $("n_opponents").value = n;
+  $("setup").hidden = true;
+  state.hand = [null, null];
+  state.board = [null, null, null, null, null];
+  state.active = { zone: "hand", i: 0 };
+  oppCards = [];
+  renderSeats(true);
+  render();
+}
+
+function setupGameKind() {
+  setupScreen(`
+    <h2>Mode JEU</h2><p>Avec qui ?</p>
+    <div class="modes">
+      <button class="mode-card" id="k-solo"><span>🤖</span><b>Solo</b><small>Toi contre des joueurs ordinateur.</small></button>
+      <button class="mode-card" id="k-local"><span>👥</span><b>Multijoueur local</b><small>Entre amis, sur le même ordinateur, chacun son tour.</small></button>
+    </div>`, openSetup);
+  $("k-solo").onclick = setupSolo;
+  $("k-local").onclick = setupLocal;
+}
+
+const optionList = (a, b, sel) => Array.from({ length: b - a + 1 }, (_, k) => a + k)
+  .map((v) => `<option ${v === sel ? "selected" : ""}>${v}</option>`).join("");
+
+const stakesHTML = () => `
+  <div class="form-row">
+    <label>Tapis de départ <input type="number" id="f-stack" min="20" value="${SETUP_DEFAULTS.stack}"></label>
+    <label>Petite blinde <input type="number" id="f-sb" min="1" value="${SETUP_DEFAULTS.sb}"></label>
+    <label>Grosse blinde <input type="number" id="f-bb" min="1" value="${SETUP_DEFAULTS.bb}"></label>
+  </div>`;
+
+const readStakes = () => ({ stack: Number($("f-stack").value), sb: Number($("f-sb").value), bb: Number($("f-bb").value) });
+
+function setupSolo() {
+  setupScreen(`
+    <h2>Solo</h2>
+    <div class="form">
+      <label>Ton prénom <input id="f-name" maxlength="16" value="Moi"></label>
+      <label>Joueurs ordinateur <select id="f-bots">${optionList(1, 9, 3)}</select></label>
+      ${stakesHTML()}
+      <button class="primary" id="f-go">Lancer la partie</button>
+    </div>`, setupGameKind);
+  $("f-go").onclick = () => {
+    const n = Number($("f-bots").value);
+    const players = [{ name: $("f-name").value.trim() || "Moi", bot: false }];
+    for (let k = 1; k <= n; k++) players.push({ name: "Bot " + k, bot: true });
+    $("setup").hidden = true;
+    startGame({ mode: "solo", players, ...readStakes() });
+  };
+}
+
+function setupLocal() {
+  setupScreen(`
+    <h2>Multijoueur local</h2>
+    <div class="form">
+      <label>Nombre de joueurs humains <select id="f-humans">${optionList(2, 8, 2)}</select></label>
+      <div id="f-names" class="names"></div>
+      <label>Joueurs ordinateur en plus <select id="f-bots"></select></label>
+      ${stakesHTML()}
+      <button class="primary" id="f-go">Lancer la partie</button>
+    </div>`, setupGameKind);
+  const names = () => {
+    const h = Number($("f-humans").value);
+    const old = [...document.querySelectorAll("#f-names input")].map((i) => i.value);
+    $("f-names").innerHTML = Array.from({ length: h }, (_, k) =>
+      `<input maxlength="16" placeholder="Joueur ${k + 1}" value="${old[k] || ""}">`).join("");
+    const cur = Number($("f-bots").value) || 0;
+    $("f-bots").innerHTML = optionList(0, 10 - h, Math.min(cur, 10 - h));
+  };
+  $("f-humans").onchange = names;
+  names();
+  $("f-go").onclick = () => {
+    const players = [...document.querySelectorAll("#f-names input")]
+      .map((inp, k) => ({ name: inp.value.trim() || `Joueur ${k + 1}`, bot: false }));
+    for (let k = 1; k <= Number($("f-bots").value); k++) players.push({ name: "Bot " + k, bot: true });
+    $("setup").hidden = true;
+    startGame({ mode: "local", players, ...readStakes() });
+  };
+}
+
 $("open-setup").onclick = openSetup;
-window.addEventListener("resize", () => { if (!dealing) renderSeats(); });
+window.addEventListener("resize", () => {
+  if (document.body.dataset.mode === "game") { if (typeof renderGame === "function") renderGame(); }
+  else if (!dealing) renderSeats();
+});
 $("n_opponents").oninput = () => {
   const n = nOpp();
   oppCards = oppCards.slice(0, n).concat(Array(Math.max(0, n - oppCards.length)).fill(state.hand.every(Boolean) ? 2 : 0));

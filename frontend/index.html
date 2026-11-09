@@ -13,17 +13,59 @@
       <p class="sub">Texas Hold'em No-Limit — aide à la décision</p>
     </header>
 
-    <section class="table">
-      <div class="zone">
-        <h2>Ma main</h2>
-        <div class="slots" id="hand-slots"></div>
+    <section class="scene" id="scene">
+      <!-- Croupier : photo si frontend/assets/dealer.png existe, sinon illustration SVG -->
+      <div class="dealer-wrap" id="dealer-wrap">
+        <img id="dealer-photo" class="dealer-photo" src="assets/dealer.png" alt="" hidden
+             onload="this.hidden=false; document.getElementById('dealer').style.display='none'"
+             onerror="this.remove()">
+        <svg id="dealer" class="dealer" viewBox="0 0 240 170" aria-hidden="true">
+          <g class="torso">
+            <path d="M28 172 Q34 112 88 100 L152 100 Q206 112 212 172 Z" fill="#f4f1ea"/>
+            <path d="M28 172 Q34 112 88 100 L104 100 L120 168 L120 172 Z" fill="#1c1c24"/>
+            <path d="M212 172 Q206 112 152 100 L136 100 L120 168 L120 172 Z" fill="#1c1c24"/>
+            <circle cx="114" cy="140" r="2.2" fill="#c9a24a"/><circle cx="114" cy="156" r="2.2" fill="#c9a24a"/>
+            <rect x="107" y="80" width="26" height="24" rx="8" fill="#d9a07b"/>
+            <path d="M106 103 L120 110 L106 117 Z M134 103 L120 110 L134 117 Z" fill="#a51f2b"/>
+            <circle cx="120" cy="110" r="3.5" fill="#7f1620"/>
+            <g class="head">
+              <ellipse cx="93" cy="62" rx="5" ry="8" fill="#d9a07b"/>
+              <ellipse cx="147" cy="62" rx="5" ry="8" fill="#d9a07b"/>
+              <ellipse cx="120" cy="60" rx="27" ry="31" fill="#e6b38e"/>
+              <path d="M93 56 Q92 26 120 26 Q150 26 147 56 Q144 38 128 38 Q108 40 98 46 Q95 50 93 56 Z" fill="#2b1d16"/>
+              <path d="M104 52 L114 51 M126 51 L136 52" stroke="#2b1d16" stroke-width="2.5" stroke-linecap="round"/>
+              <g class="eyes">
+                <ellipse cx="109" cy="60" rx="3" ry="3.4" fill="#1e1410"/>
+                <ellipse cx="131" cy="60" rx="3" ry="3.4" fill="#1e1410"/>
+              </g>
+              <path d="M120 62 Q117 72 121 73" stroke="#b9805e" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M110 79 Q120 85 130 79" stroke="#8a4b3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            </g>
+          </g>
+          <g class="arm-l">
+            <path d="M58 118 Q44 140 62 168 L84 168 Q70 142 80 124 Z" fill="#f4f1ea"/>
+            <ellipse cx="74" cy="166" rx="11" ry="8" fill="#e6b38e"/>
+          </g>
+          <g class="arm-r">
+            <path d="M182 118 Q196 140 178 168 L156 168 Q170 142 160 124 Z" fill="#f4f1ea"/>
+            <ellipse cx="166" cy="166" rx="11" ry="8" fill="#e6b38e"/>
+          </g>
+        </svg>
       </div>
-      <div class="zone">
-        <h2>Board</h2>
-        <div class="slots" id="board-slots"></div>
+
+      <div class="felt">
+        <div class="deck" id="deck"><div class="card-back"></div><div class="card-back"></div><div class="card-back"></div></div>
+        <div class="zone board-zone">
+          <h2>Board</h2>
+          <div class="slots" id="board-slots"></div>
+        </div>
+        <div class="zone hand-zone">
+          <div class="slots" id="hand-slots"></div>
+          <h2>Ma main</h2>
+        </div>
       </div>
-      <p class="hint">Clique sur une case puis sur une carte. Clic sur une carte posée pour la retirer.</p>
     </section>
+    <p class="hint">Clique sur une case puis sur une carte. Clic sur une carte posée pour la retirer.</p>
 
     <div class="deal">
       <button id="deal-new">🎲 Nouvelle donne</button>

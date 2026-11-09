@@ -2,6 +2,8 @@
   "equity": 0.62,
   "win": 0.60,
   "tie": 0.04,
+  "lose": 0.36,
+  "hand_name": "Carte haute",
   "pot_odds": 0.167,
   "ev": {"fold": 0, "call": 54.4},
   "recommendation": "call"

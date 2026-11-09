@@ -11,7 +11,7 @@ header h1 { margin: 0; }
 h2 { font-size: .9rem; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 .4rem; color: #cfe3d8; }
 
 /* ---------- Scène : croupier + table ---------- */
-.scene { position: relative; padding-top: 150px; margin-top: .5rem; }
+.scene { position: relative; padding: 150px 46px 34px; margin: .5rem -1rem 0; }
 .dealer-wrap { position: absolute; top: 0; left: 50%; width: 240px; height: 175px; transform: translateX(-50%); z-index: 0; }
 .dealer, .dealer-photo { width: 100%; height: 100%; display: block; object-fit: contain; object-position: bottom; }
 .dealer .torso, .dealer-photo { animation: breathe 4s ease-in-out infinite; transform-origin: 50% 100%; }
@@ -118,3 +118,30 @@ button:disabled { opacity: .5; cursor: wait; }
   #picker .card { font-size: .7rem; height: 36px; }
   .params, .stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ---------- Adversaires autour de la table ---------- */
+#seats { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.seat { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 4px; }
+.who { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.avatar {
+  width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #4b5563, #1f2937); border: 3px solid #c9a24a;
+  font-weight: 800; font-size: .85rem; color: #f2c14e; box-shadow: 0 3px 8px #0008;
+}
+.seat-name { font-size: .62rem; background: #000a; padding: 1px 7px; border-radius: 8px; white-space: nowrap; }
+.seat-cards { display: flex; gap: 2px; }
+.mini { width: 24px; height: 34px; border-radius: 4px; }
+.mini.empty { border: 1px dashed #ffffff30; }
+.seat.pop { animation: pop .35s ease-out backwards; }
+@keyframes pop { from { transform: translate(-50%, -50%) scale(0); opacity: 0; } }
+
+/* ---------- Écran de départ ---------- */
+.overlay { position: fixed; inset: 0; z-index: 100; background: #000b; display: flex; align-items: center; justify-content: center; }
+.overlay[hidden] { display: none; }
+.setup-box { background: var(--felt); border: 3px solid #c9a24a; border-radius: 16px; padding: 1.6rem 2rem; text-align: center; box-shadow: 0 20px 60px #000a; }
+.setup-box h2 { font-size: 1.4rem; color: var(--gold); text-transform: none; letter-spacing: 0; }
+.setup-box p { margin: .3rem 0 1rem; color: #cfe3d8; }
+.setup-grid { display: grid; grid-template-columns: repeat(3, 64px); gap: .6rem; justify-content: center; }
+.setup-grid button { background: #ffffff1c; color: #fff; font-size: 1.3rem; padding: .7rem 0; }
+.setup-grid button:hover { background: var(--gold); color: #222; }
+.setup-grid small { display: block; font-size: .6rem; font-weight: 500; opacity: .8; }

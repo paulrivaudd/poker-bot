@@ -144,8 +144,78 @@ async function flyCard(zone, i, card) {
   el.remove();
 }
 
+// ---------- Adversaires ----------
+const nOpp = () => Math.min(9, Math.max(1, Number($("n_opponents").value) || 1));
+let oppCards = [];  // nombre de cartes (face cachée) devant chaque adversaire
+
+// Positions sur l'ellipse : moitié à gauche, moitié à droite, espacées à distance égale
+// le long du bord (sens horaire depuis le bas gauche, en laissant libres notre place et le croupier).
+function arcPoints(a0, a1, count) {
+  if (count === 0) return [];
+  const felt = document.querySelector(".felt").getBoundingClientRect();
+  const rx = felt.width / 2, ry = felt.height / 2, N = 300;
+  const pts = [], cum = [0];
+  for (let j = 0; j <= N; j++) {
+    const r = ((a0 + ((a1 - a0) * j) / N) * Math.PI) / 180;
+    pts.push([Math.cos(r), Math.sin(r)]);
+    if (j) cum.push(cum[j - 1] + Math.hypot(rx * (pts[j][0] - pts[j - 1][0]), ry * (pts[j][1] - pts[j - 1][1])));
+  }
+  const out = [];
+  for (let k = 0; k < count; k++) {
+    const target = (cum[N] * (k + 0.5)) / count;
+    const j = cum.findIndex((c) => c >= target);
+    out.push({ left: 50 + 50 * pts[j][0], top: 50 + 50 * pts[j][1] });
+  }
+  return out;
+}
+
+function seatPositions(n) {
+  const left = Math.ceil(n / 2);
+  return [...arcPoints(120, 240, left), ...arcPoints(300, 420, n - left)];
+}
+
+function renderSeats(animate = false) {
+  const n = nOpp();
+  const el = $("seats");
+  el.innerHTML = "";
+  const pos = seatPositions(n);
+  for (let k = 0; k < n; k++) {
+    const p = pos[k];
+    const s = document.createElement("div");
+    s.className = "seat" + (animate ? " pop" : "");
+    s.style.left = p.left + "%"; s.style.top = p.top + "%";
+    if (animate) s.style.animationDelay = k * 70 + "ms";
+    const cards = [0, 1].map((j) => `<div class="mini ${j < (oppCards[k] || 0) ? "card-back" : "empty"}"></div>`).join("");
+    s.innerHTML = `<div class="who"><div class="avatar">J${k + 1}</div><div class="seat-name">Joueur ${k + 1}</div></div><div class="seat-cards">${cards}</div>`;
+    el.appendChild(s);
+  }
+}
+
+async function flyToSeat(k) {
+  const dealer = dealerEl();
+  dealer.classList.add("dealing");
+  const target = $("seats").children[k].querySelectorAll(".mini")[oppCards[k] || 0];
+  const from = $("deck").getBoundingClientRect();
+  const to = target.getBoundingClientRect();
+  const el = document.createElement("div");
+  el.className = "flying";
+  Object.assign(el.style, { left: to.left + "px", top: to.top + "px", width: to.width + "px", height: to.height + "px" });
+  el.innerHTML = `<div class="inner"><div class="card-back"></div></div>`;
+  document.body.appendChild(el);
+  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+  setTimeout(() => dealer.classList.remove("dealing"), REDUCED ? 0 : 150);
+  await el.animate(
+    [{ transform: `translate(${dx}px, ${dy}px) rotate(-120deg) scale(1.4)` }, { transform: "translate(0,0) rotate(0) scale(1)" }],
+    { duration: REDUCED ? 1 : 300, easing: "cubic-bezier(.2,.7,.3,1)", fill: "forwards" }
+  ).finished;
+  oppCards[k] = (oppCards[k] || 0) + 1;
+  target.className = "mini card-back";
+  el.remove();
+}
+
 function setDealButtons(disabled) {
-  for (const id of ["deal-new", "deal-hand", "deal-next", "reset"]) $(id).disabled = disabled;
+  for (const id of ["deal-new", "deal-hand", "deal-next", "reset", "open-setup"]) $(id).disabled = disabled;
   if (!disabled) updateDealButton();
 }
 
@@ -154,12 +224,14 @@ async function animateDeal(targets) {
   if (dealing) return;
   dealing = true;
   setDealButtons(true);
-  const cards = drawRandom(targets.length);
+  const cards = drawRandom(targets.filter((t) => t.seat === undefined).length);
   state.active = null;
   renderSlots();
   try {
-    for (let k = 0; k < targets.length; k++) {
-      await flyCard(targets[k].zone, targets[k].i, cards[k]);
+    let c = 0;
+    for (const t of targets) {
+      if (t.seat !== undefined) { await flyToSeat(t.seat); if (!REDUCED) await sleep(30); continue; }
+      await flyCard(t.zone, t.i, cards[c++]);
       if (!REDUCED) await sleep(90);
     }
   } finally {
@@ -197,8 +269,15 @@ function newDeal() {
   state.hand = [null, null];
   state.board = [null, null, null, null, null];
   $("result").hidden = true;
+  oppCards = [];
+  renderSeats();
   render();
-  animateDeal([{ zone: "hand", i: 0 }, { zone: "hand", i: 1 }]);
+  const targets = [];
+  for (let round = 0; round < 2; round++) {
+    for (let k = 0; k < nOpp(); k++) targets.push({ seat: k });
+    targets.push({ zone: "hand", i: round });
+  }
+  animateDeal(targets);
 }
 
 function render() { renderSlots(); renderPicker(); updateDealButton(); }
@@ -292,7 +371,38 @@ $("reset").onclick = () => {
   state.active = { zone: "hand", i: 0 };
   $("result").hidden = true;
   $("status").textContent = "";
+  oppCards = [];
+  renderSeats();
   render();
 };
 
+// ---------- Écran de départ ----------
+function openSetup() {
+  const grid = $("setup-grid");
+  grid.innerHTML = "";
+  for (let n = 1; n <= 9; n++) {
+    const b = document.createElement("button");
+    b.innerHTML = `${n}<small>${n === 1 ? "heads-up" : n + 1 + " joueurs"}</small>`;
+    b.onclick = () => {
+      $("n_opponents").value = n;
+      $("setup").hidden = true;
+      oppCards = [];
+      renderSeats(true);
+      setTimeout(newDeal, REDUCED ? 0 : 450);
+    };
+    grid.appendChild(b);
+  }
+  $("setup").hidden = false;
+}
+
+$("open-setup").onclick = openSetup;
+window.addEventListener("resize", () => { if (!dealing) renderSeats(); });
+$("n_opponents").oninput = () => {
+  const n = nOpp();
+  oppCards = oppCards.slice(0, n).concat(Array(Math.max(0, n - oppCards.length)).fill(state.hand.every(Boolean) ? 2 : 0));
+  renderSeats(true);
+};
+
+renderSeats();
 render();
+openSetup();

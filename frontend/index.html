@@ -54,6 +54,7 @@
       </div>
 
       <div class="felt">
+        <div id="seats"></div>
         <div class="deck" id="deck"><div class="card-back"></div><div class="card-back"></div><div class="card-back"></div></div>
         <div class="zone board-zone">
           <h2>Board</h2>
@@ -71,6 +72,7 @@
       <button id="deal-new">🎲 Nouvelle donne</button>
       <button id="deal-hand">🎲 Main</button>
       <button id="deal-next">Flop →</button>
+      <button id="open-setup">👥 Joueurs</button>
       <label class="check"><input type="checkbox" id="auto" checked> Analyse auto</label>
     </div>
 
@@ -132,6 +134,13 @@
       </div>
     </section>
   </main>
+  <div class="overlay" id="setup">
+    <div class="setup-box">
+      <h2>Nouvelle table</h2>
+      <p>Combien d'adversaires autour de toi ?</p>
+      <div class="setup-grid" id="setup-grid"></div>
+    </div>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>

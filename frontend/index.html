@@ -44,6 +44,12 @@
       <label>Mise à suivre
         <input id="to_call" type="number" min="0" step="any" value="20">
       </label>
+      <label>Relance (montant ajouté)
+        <input id="raise_size" type="number" min="0" step="any" placeholder="auto : taille du pot">
+      </label>
+      <label>Fold equity adverse : <b id="fe-val">30 %</b>
+        <input id="fold_equity" type="range" min="0" max="100" value="30">
+      </label>
       <label>Simulations
         <select id="n_sims">
           <option value="2000">2 000 (rapide)</option>
@@ -76,10 +82,11 @@
       </div>
 
       <div class="stats">
-        <div><span>Équité</span><b id="r-equity"></b></div>
+        <div><span>Équité</span><b id="r-equity"></b><small id="r-ci"></small></div>
         <div><span>Cote du pot</span><b id="r-pot-odds"></b></div>
         <div><span>EV fold</span><b id="r-ev-fold"></b></div>
-        <div><span>EV call</span><b id="r-ev-call"></b></div>
+        <div><span id="r-ev-passive-label">EV call</span><b id="r-ev-passive"></b></div>
+        <div><span id="r-ev-raise-label">EV raise</span><b id="r-ev-raise"></b></div>
       </div>
     </section>
   </main>

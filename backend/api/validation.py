@@ -28,6 +28,9 @@ def parse_analyze_request(data) -> dict:
         pot = float(data.get("pot", 0))
         to_call = float(data.get("to_call", 0))
         n_sims = int(data.get("n_sims", 10000))
+        fold_equity = float(data.get("fold_equity", 0.3))
+        raise_size = data.get("raise_size")
+        raise_size = None if raise_size in (None, "") else float(raise_size)
     except (TypeError, ValueError):
         raise ValidationError("Paramètres numériques invalides")
 
@@ -38,5 +41,11 @@ def parse_analyze_request(data) -> dict:
     if not 1 <= n_sims <= 200_000:
         raise ValidationError("n_sims doit être entre 1 et 200000")
 
+    if not 0 <= fold_equity <= 1:
+        raise ValidationError("fold_equity doit être entre 0 et 1")
+    if raise_size is not None and raise_size <= to_call:
+        raise ValidationError("raise_size doit être supérieur à to_call")
+
     return {"hand": hand, "board": board, "n_opponents": n_opponents,
-            "pot": pot, "to_call": to_call, "n_sims": n_sims}
+            "pot": pot, "to_call": to_call, "n_sims": n_sims,
+            "raise_size": raise_size, "fold_equity": fold_equity}

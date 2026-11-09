@@ -23,7 +23,8 @@ def test_analyze_ok(client):
     })
     assert r.status_code == 200
     data = r.get_json()
-    for key in ("equity", "win", "tie", "lose", "pot_odds", "ev", "recommendation", "hand_name"):
+    for key in ("equity", "equity_ci", "win", "tie", "lose", "pot_odds", "ev",
+                "raise_size", "recommendation", "hand_name"):
         assert key in data
     assert data["hand_name"] == "Carte haute"
 
@@ -43,7 +44,17 @@ def test_preflop_no_hand_name(client):
     {"hand": ["As", "Kd"], "n_opponents": 0},
     {"hand": ["As", "Kd"], "pot": -5},
     {"hand": ["As", "Kd"], "pot": "abc"},
+    {"hand": ["As", "Kd"], "fold_equity": 1.5},
+    {"hand": ["As", "Kd"], "to_call": 50, "raise_size": 40},
 ])
 def test_analyze_errors(client, payload):
     r = client.post("/api/analyze", json=payload)
     assert r.status_code == 400 and "error" in r.get_json()
+
+
+def test_custom_raise(client):
+    r = client.post("/api/analyze", json={
+        "hand": ["As", "Ah"], "pot": 100, "to_call": 20, "raise_size": 60,
+        "fold_equity": 0.2, "n_sims": 500,
+    }).get_json()
+    assert r["raise_size"] == 60 and "raise" in r["ev"]

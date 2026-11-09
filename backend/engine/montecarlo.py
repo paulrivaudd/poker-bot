@@ -1,4 +1,5 @@
 """Calcul d'équité par Monte Carlo (pôle A)."""
+import math
 import random
 
 from engine.cards import parse, remaining_deck
@@ -10,6 +11,7 @@ def equity(hand: list[str], board: list[str], n_opponents: int,
     """Probabilités win / tie / lose du héros contre n adversaires à mains aléatoires.
 
     `share` = part moyenne du pot gagnée (gère les partages à plusieurs).
+    `share_ci` = demi-largeur de l'intervalle de confiance à 95 % sur `share`.
     """
     rng = random.Random(seed)
     hero = [parse(c) for c in hand]
@@ -20,6 +22,7 @@ def equity(hand: list[str], board: list[str], n_opponents: int,
 
     win = tie = 0
     share = 0.0
+    share_sq = 0.0
     for _ in range(n_sims):
         drawn = rng.sample(deck, n_draw)
         full_board = known_board + drawn[:n_board]
@@ -38,13 +41,19 @@ def equity(hand: list[str], board: list[str], n_opponents: int,
         if hero_score > best_opp:
             win += 1
             share += 1
+            share_sq += 1
         elif hero_score == best_opp:
             tie += 1
-            share += 1 / (n_best + 1)
+            x = 1 / (n_best + 1)
+            share += x
+            share_sq += x * x
 
+    mean = share / n_sims
+    var = max(share_sq / n_sims - mean * mean, 0.0)
     return {
         "win": win / n_sims,
         "tie": tie / n_sims,
         "lose": (n_sims - win - tie) / n_sims,
-        "share": share / n_sims,
+        "share": mean,
+        "share_ci": 1.96 * math.sqrt(var / n_sims),
     }

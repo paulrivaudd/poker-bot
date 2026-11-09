@@ -157,9 +157,19 @@ function renderResult(d) {
   $("r-lose").textContent = pct(d.lose);
 
   $("r-equity").textContent = pct(d.equity);
+  $("r-ci").textContent = "± " + pct(d.equity_ci);
   $("r-pot-odds").textContent = pct(d.pot_odds);
+
+  const passive = "check" in d.ev ? "check" : "call";
   $("r-ev-fold").textContent = fmt(d.ev.fold);
-  $("r-ev-call").textContent = fmt(d.ev.call);
+  $("r-ev-passive-label").textContent = "EV " + passive;
+  $("r-ev-passive").textContent = fmt(d.ev[passive]);
+  $("r-ev-raise-label").textContent = "EV raise " + d.raise_size.toFixed(0);
+  $("r-ev-raise").textContent = fmt(d.ev.raise);
+
+  const cells = { fold: "r-ev-fold", call: "r-ev-passive", check: "r-ev-passive", raise: "r-ev-raise" };
+  for (const id of ["r-ev-fold", "r-ev-passive", "r-ev-raise"]) $(id).parentElement.classList.remove("best");
+  $(cells[d.recommendation]).parentElement.classList.add("best");
   $("result").hidden = false;
 }
 
@@ -183,6 +193,8 @@ async function runAnalysis() {
       pot: Number($("pot").value),
       to_call: Number($("to_call").value),
       n_sims: Number($("n_sims").value),
+      raise_size: $("raise_size").value === "" ? null : Number($("raise_size").value),
+      fold_equity: Number($("fold_equity").value) / 100,
     });
     status.textContent = "";
     renderResult(d);
@@ -197,6 +209,7 @@ async function runAnalysis() {
 }
 
 $("analyze").onclick = runAnalysis;
+$("fold_equity").oninput = () => { $("fe-val").textContent = $("fold_equity").value + " %"; };
 $("deal-new").onclick = newDeal;
 $("deal-hand").onclick = dealHand;
 $("deal-next").onclick = dealNext;

@@ -31,3 +31,10 @@ def test_more_opponents_lower_equity():
     one = equity(["As", "Ah"], [], 1, 5000, seed=5)["share"]
     four = equity(["As", "Ah"], [], 4, 5000, seed=5)["share"]
     assert four < one
+
+
+def test_confidence_interval_shrinks():
+    small = equity(["As", "Kd"], [], 1, 1000, seed=6)["share_ci"]
+    big = equity(["As", "Kd"], [], 1, 16000, seed=6)["share_ci"]
+    assert 0 < big < small
+    assert abs(big / small - 0.25) < 0.05   # en 1/sqrt(n)

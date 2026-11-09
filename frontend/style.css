@@ -30,7 +30,8 @@ h2 { font-size: .9rem; text-transform: uppercase; letter-spacing: .05em; margin:
 #picker .card:hover { transform: translateY(-2px); }
 #picker .card.used { opacity: .2; cursor: default; transform: none; }
 
-.params { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+.params { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+input[type=range] { padding: 0; accent-color: var(--gold); }
 label { display: grid; gap: .25rem; font-size: .85rem; color: #cfe3d8; }
 input, select { padding: .5rem; border-radius: 6px; border: none; font-size: 1rem; }
 
@@ -53,6 +54,7 @@ button:disabled { opacity: .5; cursor: wait; }
 .reco.call { background: var(--green); }
 .reco.check { background: #3d8bd6; }
 .reco.fold { background: var(--red); }
+.reco.raise { background: #e08a2c; }
 .hand-name { text-align: center; color: #cfe3d8; margin: .4rem 0 1rem; }
 
 .bar { display: flex; height: 18px; border-radius: 9px; overflow: hidden; background: #0004; }
@@ -61,7 +63,9 @@ button:disabled { opacity: .5; cursor: wait; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
 .dot.win { background: var(--green); } .dot.tie { background: var(--gold); } .dot.lose { background: var(--red); }
 
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem; }
+.stats small { display: block; font-size: .7rem; color: #cfe3d8; }
+.stats .best { outline: 2px solid var(--gold); }
 .stats div { background: #0003; border-radius: 8px; padding: .6rem; text-align: center; }
 .stats span { display: block; font-size: .75rem; color: #cfe3d8; }
 .stats b { font-size: 1.2rem; }

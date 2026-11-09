@@ -21,11 +21,13 @@ def analyze_route():
         return jsonify({"error": str(e)}), 400
 
     eq = equity(req["hand"], req["board"], req["n_opponents"], req["n_sims"])
-    decision = analyze(eq["share"], req["pot"], req["to_call"])
+    decision = analyze(eq["share"], req["pot"], req["to_call"],
+                       req["raise_size"], req["fold_equity"])
 
     current = req["hand"] + req["board"]
     return jsonify({
         "equity": eq["share"],
+        "equity_ci": eq["share_ci"],
         "win": eq["win"],
         "tie": eq["tie"],
         "lose": eq["lose"],

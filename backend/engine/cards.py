@@ -8,9 +8,9 @@ def is_valid_card(card) -> bool:
     return isinstance(card, str) and len(card) == 2 and card[0] in RANKS and card[1] in SUITS
 
 
-def rank_value(card: str) -> int:
-    """2 -> 0, ..., A -> 12."""
-    return RANKS.index(card[0])
+def parse(card: str) -> tuple[int, int]:
+    """'As' -> (12, 0). Rang 0 (2) à 12 (A), couleur 0 à 3."""
+    return RANKS.index(card[0]), SUITS.index(card[1])
 
 
 def remaining_deck(excluded: list[str]) -> list[str]:

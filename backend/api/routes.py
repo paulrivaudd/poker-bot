@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 
 from api.validation import ValidationError, parse_analyze_request
 from decision import analyze
-from engine import equity
+from engine import equity, hand_name
 
 bp = Blueprint("api", __name__)
 
@@ -21,12 +21,14 @@ def analyze_route():
         return jsonify({"error": str(e)}), 400
 
     eq = equity(req["hand"], req["board"], req["n_opponents"], req["n_sims"])
-    eq_value = eq["win"] + eq["tie"] / 2
-    decision = analyze(eq_value, req["pot"], req["to_call"])
+    decision = analyze(eq["share"], req["pot"], req["to_call"])
 
+    current = req["hand"] + req["board"]
     return jsonify({
-        "equity": eq_value,
+        "equity": eq["share"],
         "win": eq["win"],
         "tie": eq["tie"],
+        "lose": eq["lose"],
+        "hand_name": hand_name(current) if len(current) >= 5 else None,
         **decision,
     })

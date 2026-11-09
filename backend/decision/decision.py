@@ -1,6 +1,6 @@
 """Aide à la décision (pôle B). Formules : voir docs/contrats.md.
 
-TODO (B) : EV(raise) en v2 (hypothèse de fold equity).
+TODO (B, v2) : EV(raise) avec hypothèse de fold equity.
 """
 
 
@@ -15,8 +15,12 @@ def ev_call(equity: float, pot: float, to_call: float) -> float:
 
 def analyze(equity: float, pot: float, to_call: float) -> dict:
     po = pot_odds(pot, to_call)
+    if to_call == 0:
+        reco = "check"
+    else:
+        reco = "call" if equity > po else "fold"
     return {
         "pot_odds": po,
         "ev": {"fold": 0.0, "call": ev_call(equity, pot, to_call)},
-        "recommendation": "call" if equity > po else "fold",
+        "recommendation": reco,
     }

@@ -13,3 +13,4 @@ def test_ev_call():
 def test_recommendation():
     assert analyze(0.5, 100, 20)["recommendation"] == "call"
     assert analyze(0.1, 100, 20)["recommendation"] == "fold"
+    assert analyze(0.1, 100, 0)["recommendation"] == "check"

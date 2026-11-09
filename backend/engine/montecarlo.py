@@ -1,10 +1,50 @@
-"""Calcul d'équité par Monte Carlo (pôle A).
+"""Calcul d'équité par Monte Carlo (pôle A)."""
+import random
 
-TODO (A) : pour chaque simulation, tirer les mains adverses et compléter le board
-avec remaining_deck, comparer evaluate(), compter win / tie / lose.
-"""
+from engine.cards import parse, remaining_deck
+from engine.evaluator import evaluate_parsed
 
 
-def equity(hand: list[str], board: list[str], n_opponents: int, n_sims: int = 10000) -> dict:
-    # STUB : à remplacer
-    return {"win": 0.5, "tie": 0.0, "lose": 0.5}
+def equity(hand: list[str], board: list[str], n_opponents: int,
+           n_sims: int = 10000, seed: int | None = None) -> dict:
+    """Probabilités win / tie / lose du héros contre n adversaires à mains aléatoires.
+
+    `share` = part moyenne du pot gagnée (gère les partages à plusieurs).
+    """
+    rng = random.Random(seed)
+    hero = [parse(c) for c in hand]
+    known_board = [parse(c) for c in board]
+    deck = [parse(c) for c in remaining_deck(hand + board)]
+    n_board = 5 - len(board)
+    n_draw = 2 * n_opponents + n_board
+
+    win = tie = 0
+    share = 0.0
+    for _ in range(n_sims):
+        drawn = rng.sample(deck, n_draw)
+        full_board = known_board + drawn[:n_board]
+        hero_score = evaluate_parsed(hero + full_board)
+
+        best_opp = -1
+        n_best = 0
+        for i in range(n_opponents):
+            j = n_board + 2 * i
+            s = evaluate_parsed(drawn[j:j + 2] + full_board)
+            if s > best_opp:
+                best_opp, n_best = s, 1
+            elif s == best_opp:
+                n_best += 1
+
+        if hero_score > best_opp:
+            win += 1
+            share += 1
+        elif hero_score == best_opp:
+            tie += 1
+            share += 1 / (n_best + 1)
+
+    return {
+        "win": win / n_sims,
+        "tie": tie / n_sims,
+        "lose": (n_sims - win - tie) / n_sims,
+        "share": share / n_sims,
+    }

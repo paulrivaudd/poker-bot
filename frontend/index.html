@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker Bot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Poker Bot</h1>
+
+    <form id="form">
+      <label>Main (ex : As Kd)
+        <input id="hand" value="As Kd" required>
+      </label>
+      <label>Board (0, 3, 4 ou 5 cartes)
+        <input id="board" value="7h 8c 2s">
+      </label>
+      <label>Adversaires
+        <input id="n_opponents" type="number" min="1" max="9" value="1">
+      </label>
+      <label>Pot
+        <input id="pot" type="number" min="0" value="100">
+      </label>
+      <label>Mise à suivre
+        <input id="to_call" type="number" min="0" value="20">
+      </label>
+      <button type="submit">Analyser</button>
+    </form>
+
+    <p id="status"></p>
+
+    <section id="result" hidden>
+      <p>Équité : <strong id="r-equity"></strong></p>
+      <p>Cote du pot : <strong id="r-pot-odds"></strong></p>
+      <p>EV fold : <strong id="r-ev-fold"></strong> · EV call : <strong id="r-ev-call"></strong></p>
+      <p class="reco">Recommandation : <strong id="r-reco"></strong></p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

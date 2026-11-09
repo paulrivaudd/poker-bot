@@ -1,0 +1,42 @@
+"""Validation des entrées de l'API (pôle C)."""
+from engine.cards import is_valid_card
+
+
+class ValidationError(ValueError):
+    pass
+
+
+def parse_analyze_request(data) -> dict:
+    if not isinstance(data, dict):
+        raise ValidationError("Corps JSON attendu")
+
+    hand = data.get("hand")
+    board = data.get("board", [])
+    if not isinstance(hand, list) or len(hand) != 2:
+        raise ValidationError("La main doit contenir 2 cartes")
+    if not isinstance(board, list) or len(board) not in (0, 3, 4, 5):
+        raise ValidationError("Le board doit contenir 0, 3, 4 ou 5 cartes")
+
+    for c in hand + board:
+        if not is_valid_card(c):
+            raise ValidationError(f"Carte invalide : {c!r}")
+    if len(set(hand + board)) != len(hand) + len(board):
+        raise ValidationError("Carte en double")
+
+    try:
+        n_opponents = int(data.get("n_opponents", 1))
+        pot = float(data.get("pot", 0))
+        to_call = float(data.get("to_call", 0))
+        n_sims = int(data.get("n_sims", 10000))
+    except (TypeError, ValueError):
+        raise ValidationError("Paramètres numériques invalides")
+
+    if not 1 <= n_opponents <= 9:
+        raise ValidationError("n_opponents doit être entre 1 et 9")
+    if pot < 0 or to_call < 0:
+        raise ValidationError("pot et to_call doivent être positifs")
+    if not 1 <= n_sims <= 200_000:
+        raise ValidationError("n_sims doit être entre 1 et 200000")
+
+    return {"hand": hand, "board": board, "n_opponents": n_opponents,
+            "pot": pot, "to_call": to_call, "n_sims": n_sims}

@@ -88,3 +88,5 @@ Erreurs : `400` + `{"error": "..."}` (carte invalide, doublon, board de taille 1
 - Modélisation de l'adversaire par une range de mains
 - Multi-joueurs
 - Mode entraînement évaluant les décisions de l'utilisateur
+
+#Morphisme 
